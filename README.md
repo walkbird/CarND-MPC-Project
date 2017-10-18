@@ -1,6 +1,58 @@
 # CarND-Controls-MPC
 Self-Driving Car Engineer Nanodegree Program
 
+## The Model
+
+state:
+
+  - x: The global x position of the vehicle
+  - y: The global y position of the vehicle
+  - psi: The orientation of the vehicle in radians
+  - v: The current velocity in mph
+  - cte: Cross Track Error
+  - epsi: Orientation Error
+
+actuators:
+
+  - steering_angle: steering angle in radians
+  - throttle: throttle value [-1, 1]
+
+update equations:
+
+  - x[t+1] = x[t] + v[t] * cos(psi[t]) * dt
+  - y[t+1] = y[t] + v[t] * sin(psi[t]) * dt
+  - psi[t+1] = psi[t] + v[t] / Lf * delta[t] * dt
+  - v[t+1] = v[t] + a[t] * dt
+  - cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
+  - epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
+
+## Timestep length & Timestep Duration
+
+Timestep length (N) determines the number of variables optimized by the MPC. The bigger N, the more computation is needed.
+Timestep Duration (dt) determines the time between actuations. Larger values of dt result in less frequent actuations, which makes it harder to accurately approximate a continuous reference trajectory.
+
+The product of N and dt is T, which should be as large as possible, and dt should be as small as possible.
+
+I've tried following combinations:
+
+N = 100, dt = 0.1: as N is too large, it will take too long to compute
+N = 5, dt = 0.1, as N*dt is too small, it is hard to fit well on the reference trajectory
+
+Finally, I choose N = 10, dt = 0.1.
+
+## Waypoints
+
+Before fitting a polynomial. I transformed the waypoints from map's coordinate system to car's coordinate system. (see main.cpp lines 129-137). 
+
+As using the car's coordinate, so (x, y, psi) in car's state is now (0, 0, 0).
+
+## Latency
+
+There's a 100 millisecond latency between actuations commands on top of the connection latency. 
+
+Considering this latency, I predict the state of car at 100 millisecond later by using update equations (see main.cpp lines 106-120). And use the new state as the initial state.
+
+
 ---
 
 ## Dependencies
